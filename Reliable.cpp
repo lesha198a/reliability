@@ -27,10 +27,10 @@ bool Reliable::C(size_t i)
 }
 bool Reliable::M(size_t i)
 {
-    if (i > networks.size()) {
+    if (i > mainlines.size()) {
         exit(1);
     }
-    return networks[i - 1];
+    return mainlines[i - 1];
 }
 bool Reliable::Pr(size_t i)
 {
@@ -41,8 +41,8 @@ bool Reliable::Pr(size_t i)
 }
 bool Reliable::D(size_t i)
 {
-    if (i > sensors.size()) {
+    if (i > detectors.size()) {
         exit(1);
     }
-    return sensors[i - 1];
+    return detectors[i - 1];
 }

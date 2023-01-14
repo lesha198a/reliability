@@ -53,7 +53,23 @@ private:
     bool mainFunc() { return func1() and func2() and func3() and func4(); }
 
     void resetStateVecs() {
+        adapters.clear();
+        adapters.resize(ACount(), true);
 
+        buses.clear();
+        buses.resize(BCount(), true);
+
+        controllers.clear();
+        controllers.resize(CCount(), true);
+
+        mainlines.clear();
+        mainlines.resize(MCount(), true);
+
+        processors.clear();
+        processors.resize(PrCount(), true);
+
+        detectors.clear();
+        detectors.resize(DCount(), true);
     }
 
     //indexation starts from 1
@@ -67,9 +83,9 @@ private:
     std::vector<bool> adapters;    //A
     std::vector<bool> buses;       //B
     std::vector<bool> controllers; //C
-    std::vector<bool> networks;    //M
+    std::vector<bool> mainlines;   //M
     std::vector<bool> processors;  //Pr
-    std::vector<bool> sensors;     //D
+    std::vector<bool> detectors;   //D
 };
 
 #endif //PROGRAM_RELIABLE_H
