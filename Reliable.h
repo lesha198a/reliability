@@ -21,6 +21,13 @@ private:
     static size_t PrCount() { return 6; }
     static size_t DCount() { return 8; }
 
+    std::vector<size_t> ASkipped() { return {2}; }
+    std::vector<size_t> BSkipped() { return {}; }
+    std::vector<size_t> CSkipped() { return {3}; }
+    std::vector<size_t> MSkipped() { return {}; }
+    std::vector<size_t> PrSkipped() { return {}; }
+    std::vector<size_t> DSkipped() { return {4}; }
+
     bool func1()
     {
         return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2)) and A(1) and M(1);
@@ -44,6 +51,10 @@ private:
     }
 
     bool mainFunc() { return func1() and func2() and func3() and func4(); }
+
+    void resetStateVecs() {
+
+    }
 
     //indexation starts from 1
     bool A(size_t i);
