@@ -18,6 +18,7 @@ bool Reliable::B(size_t i)
     }
     return buses[i - 1];
 }
+
 bool Reliable::C(size_t i)
 {
     if (i > controllers.size()) {
@@ -45,4 +46,31 @@ bool Reliable::D(size_t i)
         exit(1);
     }
     return detectors[i - 1];
+}
+
+void Reliable::calculate()
+{
+    auto modelSize = getModelSize();
+    double failures = 0;
+    double vecCount = factorial(modelSize) / factorial(failures) / factorial(modelSize - failures);
+
+}
+
+size_t Reliable::getModelSize() const
+{
+    return ACount() + BCount() + CCount() + MCount() + PrCount() + DCount()
+           - (ASkipped().size() + BSkipped().size() + CSkipped().size() + DSkipped().size()
+              + MSkipped().size() + PrSkipped().size() + DSkipped().size());
+}
+
+int Reliable::factorial(int in)
+{
+    if (in < 2) {
+        return 1;
+    }
+    int res = in;
+    for (int i = in - 1; i > 0; i--) {
+        res *= i;
+    }
+    return res;
 }

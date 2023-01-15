@@ -12,6 +12,8 @@ class Reliable
 public:
     Reliable() = default;
 
+    void calculate();
+
 private:
     //count with skipped numbers of elements on circuit (aka put max number from circuit)
     static size_t ACount() { return 3; }
@@ -21,12 +23,16 @@ private:
     static size_t PrCount() { return 6; }
     static size_t DCount() { return 8; }
 
-    std::vector<size_t> ASkipped() { return {2}; }
-    std::vector<size_t> BSkipped() { return {}; }
-    std::vector<size_t> CSkipped() { return {3}; }
-    std::vector<size_t> MSkipped() { return {}; }
-    std::vector<size_t> PrSkipped() { return {}; }
-    std::vector<size_t> DSkipped() { return {4}; }
+    static std::vector<size_t> ASkipped() { return {2}; }
+    static std::vector<size_t> BSkipped() { return {}; }
+    static std::vector<size_t> CSkipped() { return {3}; }
+    static std::vector<size_t> MSkipped() { return {}; }
+    static std::vector<size_t> PrSkipped() { return {}; }
+    static std::vector<size_t> DSkipped() { return {4}; }
+
+    size_t getModelSize() const;
+
+    static int factorial(int in);
 
     bool func1()
     {
