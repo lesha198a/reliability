@@ -34,6 +34,9 @@ private:
 
     static int factorial(int in);
 
+    std::vector<std::set<size_t>> getZeroPositions(size_t vecCount, size_t failures,
+                                                      size_t modelSize) const;
+
     bool func1()
     {
         return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2)) and A(1) and M(1);
@@ -92,6 +95,7 @@ private:
     std::vector<bool> mainlines;   //M
     std::vector<bool> processors;  //Pr
     std::vector<bool> detectors;   //D
+    std::vector<bool> getStateFrom(const std::set<size_t> &zeroPoses, size_t modelSize);
 };
 
 #endif //PROGRAM_RELIABLE_H

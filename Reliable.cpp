@@ -2,6 +2,9 @@
 // Created by lesha on 14.01.2023.
 //
 
+#include <ctime>
+#include <algorithm>
+#include <set>
 #include "Reliable.h"
 
 bool Reliable::A(size_t i)
@@ -50,10 +53,16 @@ bool Reliable::D(size_t i)
 
 void Reliable::calculate()
 {
+    std::srand(std::time(nullptr));
     auto modelSize = getModelSize();
-    double failures = 0;
-    double vecCount = factorial(modelSize) / factorial(failures) / factorial(modelSize - failures);
-
+    size_t failures = 0;
+    double percentage = 1;
+    int vecCount = factorial(modelSize) / factorial(failures) / factorial(modelSize - failures);
+    int vecCountCropped = vecCount * percentage;
+    auto zeroPosVecs = getZeroPositions(vecCountCropped, failures, modelSize);
+    for (const auto &zeroPosesVec : zeroPosVecs) {
+        auto stateVec = getStateFrom(zeroPosesVec, modelSize);
+    }
 }
 
 size_t Reliable::getModelSize() const
@@ -73,4 +82,23 @@ int Reliable::factorial(int in)
         res *= i;
     }
     return res;
+}
+
+std::vector<std::set<size_t>> Reliable::getZeroPositions(size_t vecCount, size_t failures,
+                                                         size_t modelSize) const
+{
+    std::vector<std::set<size_t>> res;
+    for (int i = 0; i < vecCount; ++i) {
+        std::vector<size_t> positions;
+        while (positions.size() < failures) {
+            positions.push_back(std::rand() % modelSize);
+        }
+    }
+    return res;
+}
+
+std::vector<bool> Reliable::getStateFrom(const std::set<size_t> &zeroPoses, size_t modelSize)
+{
+
+    return std::vector<bool>();
 }
