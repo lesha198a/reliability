@@ -52,27 +52,27 @@ bool Reliable::D(size_t i)
     return detectors[i - 1];
 }
 
-void Reliable::calculate()
+double Reliable::calculateReliability(size_t failures, double percentage, bool redistribution)
 {
-    std::srand(std::time(nullptr));
     double result = 0;
     auto modelSize = getModelSize();
-    size_t failures = 1;
-    double percentage = 1;
-    int64_t vecCount = factorialTriple(factorialTriple(modelSize, failures, 0, 0),
-                                       modelSize - failures, 0, 0);
-    int vecCountCropped = vecCount * percentage;
-    auto failurePosVecs = getFailurePositions(vecCountCropped, failures, modelSize);
+    size_t vecCount = factorialTriple(modelSize, failures,
+                                       modelSize - failures,percentage);
+    auto failurePosVecs = getFailurePositions((size_t )vecCount, failures, modelSize);
+
+    resetStageStatistic(modelSize);
     for (const auto &failurePoses : failurePosVecs) {
         auto stateVec = getStateFrom(failurePoses, modelSize);
         setState(stateVec, modelSize);
         bool sysState = mainFunc(); //todo redistrib
         if (sysState) {
             result += getProbability();
-            std::cout << "prob " << result <<std::endl;
+        } else {
+            appendStageFailureStatistic(stateVec);
         }
     }
     std::cout << "Result: " << result / percentage << std::endl;
+    return result / percentage;
 }
 
 size_t Reliable::getModelSize() const
@@ -82,51 +82,51 @@ size_t Reliable::getModelSize() const
               + MSkipped().size() + PrSkipped().size() + DSkipped().size());
 }
 
-int64_t Reliable::factorialTriple(int64_t dividend, int64_t divisor, int64_t divisor2,
+size_t Reliable::factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
                                   double resScale)
 {
-    int64_t dividendFixed = dividend;
+    size_t dividendFixed = dividend;
     if (dividend < 2) {
         dividendFixed = 1;
     }
-    int64_t divisorFixed = divisor;
+    size_t divisorFixed = divisor;
     if (divisor < 2) {
         divisorFixed = 1;
     }
-    int64_t divisor2Fixed = divisor2;
+    size_t divisor2Fixed = divisor2;
     if (divisor2 < 2) {
         divisor2Fixed = 1;
     }
-    int64_t dividendLeft = 1;
-    int64_t dividendRight = 1;
-    int64_t divisorLeft = 1;
-    int64_t divisorRight = 1;
-    if (divisorFixed < dividendFixed) {
-        dividendLeft = divisorFixed + 1;
-        dividendRight = dividendFixed;
-    } else {
-        divisorLeft = dividendFixed + 1;
-        divisorRight = divisorFixed;
-    }
-    int64_t divisor2Left1 = 1;
-    int64_t divisor2Right1 = 1;
-    int64_t divisor2Left2 = 1;
-    int64_t divisor2Right2 = 1;
+    size_t dividendLeft = divisorFixed + 1;
+    size_t dividendRight = dividendFixed;
+    size_t divisorLeft = dividendFixed + 1;
+    size_t divisorRight = divisorFixed;
+    size_t divisor2Left1 = 1;
+    size_t divisor2Right1 = 1;
+    size_t divisor2Left2 = 1;
+    size_t divisor2Right2 = divisor2Fixed;
     if (divisor2Fixed >= dividendLeft) {
         divisor2Right1 = dividendLeft - 1;
+        divisor2Left2 = dividendRight + 1;
         dividendLeft = divisor2Fixed + 1;
-        if (divisor2Fixed < dividendRight) {
-            dividendLeft = divisor2Fixed + 1;
-        }
-
     }
-
-
-    int64_t res = 1;
-    for (int64_t i = min + 1; i < max + 1; i++) {
-        res *= i;
+    size_t res1 = 1;
+    for (size_t i = dividendLeft; i <= dividendRight; ++i) {
+        res1 *= i;
     }
-    return res;
+    size_t res2 = 1;
+    for (size_t i = divisorLeft; i <= divisorRight; ++i) {
+        res2 *= i;
+    }
+    size_t res3 = 1;
+    for (size_t i = divisor2Left1; i <= divisor2Right1; ++i) {
+        res3 *= i;
+    }
+    size_t res4 = 1;
+    for (size_t i = divisor2Left2; i <= divisor2Right2; ++i) {
+        res4 *= i;
+    }
+    return static_cast<size_t>(resScale * ((res1) / (res2 * res3 * res4)));
 }
 
 std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, size_t failures,
@@ -134,10 +134,11 @@ std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, siz
 {
     std::vector<std::set<size_t>> res;
     for (int i = 0; i < vecCount; ++i) {
-        std::vector<size_t> positions;
+        std::set<size_t> positions;
         while (positions.size() < failures) {
-            positions.push_back(std::rand() % modelSize);
+            positions.insert(std::rand() % modelSize);
         }
+        res.push_back(positions);
     }
     return res;
 }
@@ -207,4 +208,27 @@ double Reliable::getModuleReliabilityState(size_t count, const std::vector<size_
         }
     }
     return res;
+}
+
+void Reliable::appendStageFailureStatistic(std::vector<bool> state) {
+    for (int i = 0; i < state.size(); ++i) {
+        if (!state[i]) {
+            mStageStatistic[i]++;
+        }
+    }
+}
+
+void Reliable::finishStageStatistic() {
+    for (int i = 0; i < mTotalStatistic.size(); ++i) {
+        mTotalStatistic[i] += mStageStatistic[i];
+    }
+}
+
+void Reliable::resetStageStatistic(size_t modelSize) {
+    mStageStatistic.clear();
+    mStageStatistic.resize(modelSize, 0);
+}
+
+Reliable::Reliable() {
+    std::srand(std::time(nullptr));
 }

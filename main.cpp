@@ -3,6 +3,6 @@
 
 int main() {
     Reliable calc;
-    calc.calculate();
+    calc.calculateReliability(0, 0, 0);
     return 0;
 }

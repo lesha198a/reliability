@@ -11,9 +11,9 @@
 class Reliable
 {
 public:
-    Reliable() = default;
+    Reliable();
 
-    void calculate();
+    double calculateReliability(size_t failures, double percentage, bool redistribution);
 
 private:
     //count with skipped numbers of elements on circuit (aka put max number from circuit)
@@ -33,7 +33,7 @@ private:
 
     size_t getModelSize() const;
 
-    static int64_t factorialTriple(int64_t dividend, int64_t divisor, int64_t divisor2,
+    static size_t factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
                                    double resScale);
 
     std::vector<std::set<size_t>> getFailurePositions(size_t vecCount, size_t failures,
@@ -113,6 +113,12 @@ private:
                             size_t count) const;
     double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
                                    const std::vector<bool> &vec, double reliability) const;
+    void appendStageFailureStatistic(std::vector<bool> state);
+    void finishStageStatistic();
+    void resetStageStatistic(size_t modelSize);
+
+    std::vector<size_t > mStageStatistic;
+    std::vector<size_t > mTotalStatistic;
 };
 
 #endif //PROGRAM_RELIABLE_H
