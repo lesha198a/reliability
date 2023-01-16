@@ -6,6 +6,7 @@
 #define PROGRAM_RELIABLE_H
 
 #include <vector>
+#include <set>
 
 class Reliable
 {
@@ -19,22 +20,23 @@ private:
     static size_t ACount() { return 3; }
     static size_t BCount() { return 4; }
     static size_t CCount() { return 6; }
+    static size_t DCount() { return 8; }
     static size_t MCount() { return 2; }
     static size_t PrCount() { return 6; }
-    static size_t DCount() { return 8; }
 
     static std::vector<size_t> ASkipped() { return {2}; }
     static std::vector<size_t> BSkipped() { return {}; }
     static std::vector<size_t> CSkipped() { return {3}; }
+    static std::vector<size_t> DSkipped() { return {4}; }
     static std::vector<size_t> MSkipped() { return {}; }
     static std::vector<size_t> PrSkipped() { return {}; }
-    static std::vector<size_t> DSkipped() { return {4}; }
 
     size_t getModelSize() const;
 
-    static int factorial(int in);
+    static int64_t factorialTriple(int64_t dividend, int64_t divisor, int64_t divisor2,
+                                   double resScale);
 
-    std::vector<std::set<size_t>> getZeroPositions(size_t vecCount, size_t failures,
+    std::vector<std::set<size_t>> getFailurePositions(size_t vecCount, size_t failures,
                                                       size_t modelSize) const;
 
     bool func1()
@@ -61,7 +63,8 @@ private:
 
     bool mainFunc() { return func1() and func2() and func3() and func4(); }
 
-    void resetStateVecs() {
+    void resetStateVecs()
+    {
         adapters.clear();
         adapters.resize(ACount(), true);
 
@@ -71,31 +74,45 @@ private:
         controllers.clear();
         controllers.resize(CCount(), true);
 
+        detectors.clear();
+        detectors.resize(DCount(), true);
+
         mainlines.clear();
         mainlines.resize(MCount(), true);
 
         processors.clear();
         processors.resize(PrCount(), true);
-
-        detectors.clear();
-        detectors.resize(DCount(), true);
     }
 
     //indexation starts from 1
     bool A(size_t i);
     bool B(size_t i);
     bool C(size_t i);
+    bool D(size_t i);
     bool M(size_t i);
     bool Pr(size_t i);
-    bool D(size_t i);
 
     std::vector<bool> adapters;    //A
     std::vector<bool> buses;       //B
     std::vector<bool> controllers; //C
+    std::vector<bool> detectors;   //D
     std::vector<bool> mainlines;   //M
     std::vector<bool> processors;  //Pr
-    std::vector<bool> detectors;   //D
-    std::vector<bool> getStateFrom(const std::set<size_t> &zeroPoses, size_t modelSize);
+
+    const double adaptersReliability = 4.2e-4;    //A
+    const double busesReliability = 1.4e-5;       //B
+    const double controllersReliability = 3.1e-4; //C
+    const double detectorsReliability = 2.2e-5;   //D
+    const double mainlinesReliability = 1.3e-4;   //M
+    const double processorsReliability = 6.2e-4;  //Pr
+    std::vector<bool> getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize);
+    void setState(const std::vector<bool> &state, size_t modelSize);
+    double getProbability();
+    int setModulesFromState(size_t modelSize, int iState, const std::vector<bool> &localState,
+                            const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
+                            size_t count) const;
+    double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
+                                   const std::vector<bool> &vec, double reliability) const;
 };
 
 #endif //PROGRAM_RELIABLE_H

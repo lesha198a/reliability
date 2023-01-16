@@ -1,6 +1,8 @@
 #include <iostream>
+#include "Reliable.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    Reliable calc;
+    calc.calculate();
     return 0;
 }
