@@ -18,6 +18,7 @@ public:
     double calculateReliability(size_t failures, double percentage, bool redistribution);
 
     std::map<std::string, size_t> getStatistics();
+    void resetStatistic();
 
 private:
     //count with skipped numbers of elements on circuit (aka put max number from circuit)

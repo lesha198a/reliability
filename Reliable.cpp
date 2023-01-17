@@ -18,6 +18,7 @@ Reliable::Reliable()
     mRedistribution.setProcessorParams(4, 70, 100);
     mRedistribution.setProcessorParams(5, 20, 40);
     mRedistribution.setProcessorParams(6, 40, 50);
+    resetStatistic();
 }
 
 bool Reliable::A(size_t i)
@@ -278,13 +279,20 @@ int Reliable::statisticForModule(size_t count, const std::vector<size_t> &skippe
 {
     std::stringstream stream;
     for (int j = 0; j < mTotalStatistic.size() && j < count; ++j) {
-        if (std::find(skipped.begin(), skipped.end(), j + i + 1) != skipped.end()) {
+        if (std::find(skipped.begin(), skipped.end(), j + 1) != skipped.end()) {
+            i--;
             continue;
         }
-        stream << name << j;
+        stream << name << j + 1;
         auto resName = stream.str();
         stream.clear();
         res[resName] = mTotalStatistic[i + j];
+        std::cout<<resName<<" "<<mTotalStatistic[i + j];
     }
     return i + (int)count;
+}
+
+void Reliable::resetStatistic() {
+    mTotalStatistic.clear();
+    mTotalStatistic.resize(getModelSize(), 0);
 }
