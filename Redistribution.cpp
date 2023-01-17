@@ -5,6 +5,7 @@
 #include "Redistribution.h"
 
 #include <utility>
+#include <iostream>
 
 void Redistribution::setProcessorParams(size_t procNum, size_t nominalLoad, size_t maxLoad,
                                         std::vector<size_t> redistributionOptions)
@@ -12,6 +13,10 @@ void Redistribution::setProcessorParams(size_t procNum, size_t nominalLoad, size
     mMaxLoads[procNum] = maxLoad;
     mNominalLoads[procNum] = nominalLoad;
     mRedistribution[procNum] = std::move(redistributionOptions);
+    mTotalLoad = 0;
+    for (const auto &moduleLoad : mNominalLoads) {
+        mTotalLoad += moduleLoad;
+    }
 }
 
 void Redistribution::setProcessorsCount(size_t count, std::vector<size_t> skippedModules)
@@ -44,14 +49,12 @@ bool Redistribution::redistribute(std::vector<bool> state)
         }
     }
 
-
-
-    return true;
+    return checkRedistribution();
 }
 
 bool Redistribution::redistributeModule(int i) {
     int j = -1;
-    while (mCurrentLoad[i] != 0) {
+    while (mCurrentLoad[i] > 0) {
         j++;
         if (j == i) {
             continue;
@@ -63,5 +66,33 @@ bool Redistribution::redistributeModule(int i) {
             continue;
         }
 
+        size_t requestedByTable = mRedistribution[i][j];
+        if (requestedByTable == 0) {
+            continue;
+        }
+        int available = (int)mMaxLoads[j] - (int)mCurrentLoad[j];
+        if (available >= requestedByTable && requestedByTable <= mCurrentLoad[i]) {
+            mCurrentLoad[i] -= requestedByTable;
+            mCurrentLoad[j] += requestedByTable;
+        }
     }
-    return false; }
+    return true;
+}
+
+bool Redistribution::checkRedistribution()
+{
+    size_t currentTotalLoad = 0;
+    for (int i = 0; i < mStates.size(); ++i) {
+        if (mStates[i]) {
+            if (mCurrentLoad[i] > mMaxLoads[i]) {
+                std::cout << "error: working processor has current load > max load" << std::endl;
+                return false;
+            }
+            currentTotalLoad += mCurrentLoad[i];
+        } else if (mCurrentLoad[i] != 0) {
+            std::cout << "error: failed processor has current load != 0" << std::endl;
+            return false;
+        }
+    }
+    return currentTotalLoad == mTotalLoad;
+}

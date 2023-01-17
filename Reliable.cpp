@@ -15,6 +15,7 @@ bool Reliable::A(size_t i)
     }
     return adapters[i - 1];
 }
+
 bool Reliable::B(size_t i)
 {
     if (i > buses.size()) {
@@ -30,6 +31,7 @@ bool Reliable::C(size_t i)
     }
     return controllers[i - 1];
 }
+
 bool Reliable::M(size_t i)
 {
     if (i > mainlines.size()) {
@@ -37,6 +39,7 @@ bool Reliable::M(size_t i)
     }
     return mainlines[i - 1];
 }
+
 bool Reliable::Pr(size_t i)
 {
     if (i > processors.size()) {
@@ -44,6 +47,7 @@ bool Reliable::Pr(size_t i)
     }
     return processors[i - 1];
 }
+
 bool Reliable::D(size_t i)
 {
     if (i > detectors.size()) {
@@ -72,6 +76,7 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
         }
     }
     std::cout << "Result: " << result / percentage << std::endl;
+    finishStageStatistic();
     return result / percentage;
 }
 
@@ -231,4 +236,7 @@ void Reliable::resetStageStatistic(size_t modelSize) {
 
 Reliable::Reliable() {
     std::srand(std::time(nullptr));
+
+    mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
+    mRedistribution.setProcessorParams()
 }

@@ -27,7 +27,9 @@ private:
     std::vector<size_t> mNominalLoads;
     std::vector<size_t> mMaxLoads;
     std::vector<std::vector<size_t>> mRedistribution;
+    size_t mTotalLoad = 0;
     bool redistributeModule(int i);
+    bool checkRedistribution();
 };
 
 #endif //PROGRAM_REDISTRIBUTION_H

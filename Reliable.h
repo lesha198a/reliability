@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <set>
+#include "Redistribution.h"
 
 class Reliable
 {
@@ -38,6 +39,18 @@ private:
 
     std::vector<std::set<size_t>> getFailurePositions(size_t vecCount, size_t failures,
                                                       size_t modelSize) const;
+
+    std::vector<bool> getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize);
+    void setState(const std::vector<bool> &state, size_t modelSize);
+    double getProbability();
+    int setModulesFromState(size_t modelSize, int iState, const std::vector<bool> &localState,
+                            const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
+                            size_t count) const;
+    double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
+                                     const std::vector<bool> &vec, double reliability) const;
+    void appendStageFailureStatistic(std::vector<bool> state);
+    void finishStageStatistic();
+    void resetStageStatistic(size_t modelSize);
 
     bool func1()
     {
@@ -105,20 +118,11 @@ private:
     const double detectorsReliability = 2.2e-5;   //D
     const double mainlinesReliability = 1.3e-4;   //M
     const double processorsReliability = 6.2e-4;  //Pr
-    std::vector<bool> getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize);
-    void setState(const std::vector<bool> &state, size_t modelSize);
-    double getProbability();
-    int setModulesFromState(size_t modelSize, int iState, const std::vector<bool> &localState,
-                            const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
-                            size_t count) const;
-    double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
-                                   const std::vector<bool> &vec, double reliability) const;
-    void appendStageFailureStatistic(std::vector<bool> state);
-    void finishStageStatistic();
-    void resetStageStatistic(size_t modelSize);
 
     std::vector<size_t > mStageStatistic;
     std::vector<size_t > mTotalStatistic;
+
+    Redistribution mRedistribution;
 };
 
 #endif //PROGRAM_RELIABLE_H
