@@ -6,7 +6,19 @@
 #include <algorithm>
 #include <set>
 #include <iostream>
+#include <sstream>
 #include "Reliable.h"
+
+Reliable::Reliable()
+{
+    mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
+    mRedistribution.setProcessorParams(1, 50, 100);
+    mRedistribution.setProcessorParams(2, 60, 90);
+    mRedistribution.setProcessorParams(3, 40, 90);
+    mRedistribution.setProcessorParams(4, 70, 100);
+    mRedistribution.setProcessorParams(5, 20, 40);
+    mRedistribution.setProcessorParams(6, 40, 50);
+}
 
 bool Reliable::A(size_t i)
 {
@@ -235,19 +247,6 @@ void Reliable::resetStageStatistic(size_t modelSize) {
     mStageStatistic.resize(modelSize, 0);
 }
 
-Reliable::Reliable()
-{
-    std::srand(std::time(nullptr));
-
-    mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
-    mRedistribution.setProcessorParams(1, 50, 100);
-    mRedistribution.setProcessorParams(2, 60, 90);
-    mRedistribution.setProcessorParams(3, 40, 90);
-    mRedistribution.setProcessorParams(4, 70, 100);
-    mRedistribution.setProcessorParams(5, 20, 40);
-    mRedistribution.setProcessorParams(6, 40, 50);
-}
-
 std::vector<bool> Reliable::getPrState(const std::vector<bool> &fullState)
 {
     std::vector<bool> res;
@@ -257,4 +256,35 @@ std::vector<bool> Reliable::getPrState(const std::vector<bool> &fullState)
         res[i] = fullState[padding + i];
     }
     return res;
+}
+
+std::map<std::string, size_t> Reliable::getStatistics()
+{
+    std::map<std::string, size_t> res;
+
+    int i = statisticForModule(ACount(), ASkipped(), res, 0, "A");
+    i = statisticForModule(BCount(), BSkipped(), res, i, "B");
+    i = statisticForModule(CCount(), CSkipped(), res, i, "C");
+    i = statisticForModule(DCount(), DSkipped(), res, i, "D");
+    i = statisticForModule(MCount(), MSkipped(), res, i, "M");
+    statisticForModule(PrCount(), PrSkipped(), res, i, "Pr");
+
+    return res;
+}
+
+int Reliable::statisticForModule(size_t count, const std::vector<size_t> &skipped,
+                                 std::map<std::string, size_t> &res, int i,
+                                 const std::string &name) const
+{
+    std::stringstream stream;
+    for (int j = 0; j < mTotalStatistic.size() && j < count; ++j) {
+        if (std::find(skipped.begin(), skipped.end(), j + i + 1) != skipped.end()) {
+            continue;
+        }
+        stream << name << j;
+        auto resName = stream.str();
+        stream.clear();
+        res[resName] = mTotalStatistic[i + j];
+    }
+    return i + (int)count;
 }

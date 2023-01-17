@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 #include "Redistribution.h"
 
 class Reliable
@@ -15,6 +16,8 @@ public:
     Reliable();
 
     double calculateReliability(size_t failures, double percentage, bool redistribution);
+
+    std::map<std::string, size_t> getStatistics();
 
 private:
     //count with skipped numbers of elements on circuit (aka put max number from circuit)
@@ -35,7 +38,7 @@ private:
     size_t getModelSize() const;
 
     static size_t factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
-                                   double resScale);
+                                  double resScale);
 
     std::vector<std::set<size_t>> getFailurePositions(size_t vecCount, size_t failures,
                                                       size_t modelSize) const;
@@ -48,6 +51,9 @@ private:
                             size_t count) const;
     double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
                                      const std::vector<bool> &vec, double reliability) const;
+
+    int statisticForModule(size_t count, const std::vector<size_t> &skipped,
+                           std::map<std::string, size_t> &res, int i, const std::string& name) const;
     void appendStageFailureStatistic(std::vector<bool> state);
     void finishStageStatistic();
     void resetStageStatistic(size_t modelSize);
@@ -75,6 +81,8 @@ private:
     }
 
     bool mainFunc() { return func1() and func2() and func3() and func4(); }
+
+    static std::vector<bool> getPrState(const std::vector<bool> &fullState);
 
     void resetStateVecs()
     {
@@ -119,11 +127,10 @@ private:
     const double mainlinesReliability = 1.3e-4;   //M
     const double processorsReliability = 6.2e-4;  //Pr
 
-    std::vector<size_t > mStageStatistic;
-    std::vector<size_t > mTotalStatistic;
+    std::vector<size_t> mStageStatistic;
+    std::vector<size_t> mTotalStatistic;
 
     Redistribution mRedistribution;
-    static std::vector<bool> getPrState(const std::vector<bool>& fullState);
 };
 
 #endif //PROGRAM_RELIABLE_H
