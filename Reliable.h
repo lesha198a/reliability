@@ -123,6 +123,7 @@ private:
     std::vector<size_t > mTotalStatistic;
 
     Redistribution mRedistribution;
+    static std::vector<bool> getPrState(const std::vector<bool>& fullState);
 };
 
 #endif //PROGRAM_RELIABLE_H

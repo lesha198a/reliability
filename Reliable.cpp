@@ -68,14 +68,15 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
     for (const auto &failurePoses : failurePosVecs) {
         auto stateVec = getStateFrom(failurePoses, modelSize);
         setState(stateVec, modelSize);
-        bool sysState = mainFunc(); //todo redistrib
+        bool sysState = mainFunc()
+                        || (redistribution && mRedistribution.redistribute(getPrState(stateVec)));
         if (sysState) {
             result += getProbability();
         } else {
             appendStageFailureStatistic(stateVec);
         }
     }
-    std::cout << "Result: " << result / percentage << std::endl;
+//    std::cout << "Result: " << result / percentage << std::endl;
     finishStageStatistic();
     return result / percentage;
 }
@@ -140,7 +141,7 @@ std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, siz
     std::vector<std::set<size_t>> res;
     for (int i = 0; i < vecCount; ++i) {
         std::set<size_t> positions;
-        while (positions.size() < failures) {
+        while (positions.size() <= failures) {
             positions.insert(std::rand() % modelSize);
         }
         res.push_back(positions);
@@ -234,9 +235,26 @@ void Reliable::resetStageStatistic(size_t modelSize) {
     mStageStatistic.resize(modelSize, 0);
 }
 
-Reliable::Reliable() {
+Reliable::Reliable()
+{
     std::srand(std::time(nullptr));
 
     mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
-    mRedistribution.setProcessorParams()
+    mRedistribution.setProcessorParams(1, 50, 100);
+    mRedistribution.setProcessorParams(2, 60, 90);
+    mRedistribution.setProcessorParams(3, 40, 90);
+    mRedistribution.setProcessorParams(4, 70, 100);
+    mRedistribution.setProcessorParams(5, 20, 40);
+    mRedistribution.setProcessorParams(6, 40, 50);
+}
+
+std::vector<bool> Reliable::getPrState(const std::vector<bool> &fullState)
+{
+    std::vector<bool> res;
+    res.resize(PrCount(), false);
+    int padding = (int)fullState.size() - (int)PrCount();
+    for (int i = 0; i < PrCount(); ++i) {
+        res[i] = fullState[padding + i];
+    }
+    return res;
 }

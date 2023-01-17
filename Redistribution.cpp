@@ -7,12 +7,10 @@
 #include <utility>
 #include <iostream>
 
-void Redistribution::setProcessorParams(size_t procNum, size_t nominalLoad, size_t maxLoad,
-                                        std::vector<size_t> redistributionOptions)
+void Redistribution::setProcessorParams(size_t procNum, size_t nominalLoad, size_t maxLoad)
 {
-    mMaxLoads[procNum] = maxLoad;
-    mNominalLoads[procNum] = nominalLoad;
-    mRedistribution[procNum] = std::move(redistributionOptions);
+    mMaxLoads[procNum - 1] = maxLoad;
+    mNominalLoads[procNum - 1] = nominalLoad;
     mTotalLoad = 0;
     for (const auto &moduleLoad : mNominalLoads) {
         mTotalLoad += moduleLoad;
@@ -27,17 +25,11 @@ void Redistribution::setProcessorsCount(size_t count, std::vector<size_t> skippe
     mMaxLoads.resize(mCount, 0);
     mNominalLoads.clear();
     mNominalLoads.resize(mCount, 0);
-    mRedistribution.clear();
-    std::vector<size_t> redistributionForOneModule;
-    redistributionForOneModule.resize(mCount, 0);
-    mRedistribution.resize(mCount, redistributionForOneModule);
 }
 
 bool Redistribution::redistribute(std::vector<bool> state)
 {
     mStates = std::move(state);
-    mRedistributed.clear();
-    mRedistributed.resize(mCount, false);
     mCurrentLoad = mNominalLoads;
 
     for (int i = 0; i < mStates.size(); ++i) {
@@ -66,15 +58,13 @@ bool Redistribution::redistributeModule(int i) {
             continue;
         }
 
-        size_t requestedByTable = mRedistribution[i][j];
-        if (requestedByTable == 0) {
-            continue;
-        }
         int available = (int)mMaxLoads[j] - (int)mCurrentLoad[j];
-        if (available >= requestedByTable && requestedByTable <= mCurrentLoad[i]) {
-            mCurrentLoad[i] -= requestedByTable;
-            mCurrentLoad[j] += requestedByTable;
+        if (available < 0) {
+            return false;
         }
+        size_t toRedistribute = std::min<size_t>(available, mCurrentLoad[i]);
+        mCurrentLoad[i] -= toRedistribute;
+        mCurrentLoad[j] += toRedistribute;
     }
     return true;
 }
