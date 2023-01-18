@@ -12,11 +12,11 @@
 Reliable::Reliable()
 {
     mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
-    mRedistribution.setProcessorParams(1, 50, 100);
+    mRedistribution.setProcessorParams(1, 45, 90);
     mRedistribution.setProcessorParams(2, 60, 90);
-    mRedistribution.setProcessorParams(3, 40, 90);
-    mRedistribution.setProcessorParams(4, 70, 100);
-    mRedistribution.setProcessorParams(5, 20, 40);
+    mRedistribution.setProcessorParams(3, 50, 90);
+    mRedistribution.setProcessorParams(4, 60, 90);
+    mRedistribution.setProcessorParams(5, 20, 50);
     mRedistribution.setProcessorParams(6, 40, 50);
     resetStatistic();
 }
@@ -73,24 +73,19 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
 {
     double result = 0;
     auto modelSize = getModelSize();
-    size_t vecCount = factorialTriple(modelSize, failures,
-                                       modelSize - failures,percentage);
-    auto failurePosVecs = getFailurePositions((size_t )vecCount, failures, modelSize);
+    size_t vecCount = factorialTriple(modelSize, failures, modelSize - failures, percentage);
+    auto failurePosVecs = getFailurePositions((size_t)vecCount, failures, modelSize);
 
-    resetStageStatistic(modelSize);
     for (const auto &failurePoses : failurePosVecs) {
         auto stateVec = getStateFrom(failurePoses, modelSize);
         setState(stateVec, modelSize);
-        bool sysState = mainFunc()
-                        || (redistribution && mRedistribution.redistribute(getPrState(stateVec)));
+        bool sysState = mainFunc() || (redistribution && mRedistribution.redistribute(processors));
         if (sysState) {
             result += getProbability();
         } else {
             appendStageFailureStatistic(stateVec);
         }
     }
-//    std::cout << "Result: " << result / percentage << std::endl;
-    finishStageStatistic();
     return result / percentage;
 }
 
@@ -98,11 +93,10 @@ size_t Reliable::getModelSize() const
 {
     return ACount() + BCount() + CCount() + MCount() + PrCount() + DCount()
            - (ASkipped().size() + BSkipped().size() + CSkipped().size() + DSkipped().size()
-              + MSkipped().size() + PrSkipped().size() + DSkipped().size());
+              + MSkipped().size() + PrSkipped().size());
 }
 
-size_t Reliable::factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
-                                  double resScale)
+size_t Reliable::factorialTriple(size_t dividend, size_t divisor, size_t divisor2, double resScale)
 {
     size_t dividendFixed = dividend;
     if (dividend < 2) {
@@ -155,7 +149,8 @@ std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, siz
     for (int i = 0; i < vecCount; ++i) {
         std::set<size_t> positions;
         while (positions.size() <= failures) {
-            positions.insert(std::rand() % modelSize);
+            size_t pos = std::rand() % modelSize;
+            positions.insert(pos);
         }
         res.push_back(positions);
     }
@@ -229,34 +224,26 @@ double Reliable::getModuleReliabilityState(size_t count, const std::vector<size_
     return res;
 }
 
-void Reliable::appendStageFailureStatistic(std::vector<bool> state) {
+void Reliable::appendStageFailureStatistic(std::vector<bool> state)
+{
     for (int i = 0; i < state.size(); ++i) {
         if (!state[i]) {
-            mStageStatistic[i]++;
+            mTotalStatistic[i]++;
         }
     }
 }
 
-void Reliable::finishStageStatistic() {
+void Reliable::finishStageStatistic()
+{
     for (int i = 0; i < mTotalStatistic.size(); ++i) {
         mTotalStatistic[i] += mStageStatistic[i];
     }
 }
 
-void Reliable::resetStageStatistic(size_t modelSize) {
+void Reliable::resetStageStatistic(size_t modelSize)
+{
     mStageStatistic.clear();
     mStageStatistic.resize(modelSize, 0);
-}
-
-std::vector<bool> Reliable::getPrState(const std::vector<bool> &fullState)
-{
-    std::vector<bool> res;
-    res.resize(PrCount(), false);
-    int padding = (int)fullState.size() - (int)PrCount();
-    for (int i = 0; i < PrCount(); ++i) {
-        res[i] = fullState[padding + i];
-    }
-    return res;
 }
 
 std::map<std::string, size_t> Reliable::getStatistics()
@@ -278,21 +265,21 @@ int Reliable::statisticForModule(size_t count, const std::vector<size_t> &skippe
                                  const std::string &name) const
 {
     std::stringstream stream;
-    for (int j = 0; j < mTotalStatistic.size() && j < count; ++j) {
+    for (int j = 0; j < count; ++j) {
         if (std::find(skipped.begin(), skipped.end(), j + 1) != skipped.end()) {
-            i--;
             continue;
         }
         stream << name << j + 1;
         auto resName = stream.str();
-        stream.clear();
-        res[resName] = mTotalStatistic[i + j];
-        std::cout<<resName<<" "<<mTotalStatistic[i + j];
+        stream.str("");
+        res[resName] = mTotalStatistic[i];
+        i++;
     }
-    return i + (int)count;
+    return i;
 }
 
-void Reliable::resetStatistic() {
+void Reliable::resetStatistic()
+{
     mTotalStatistic.clear();
     mTotalStatistic.resize(getModelSize(), 0);
 }
