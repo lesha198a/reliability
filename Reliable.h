@@ -19,6 +19,7 @@ public:
 
     std::map<std::string, size_t> getStatistics();
     void resetStatistic();
+    void printRedistributionTable() { mRedistribution.printTable(); }
 
 private:
     //count with skipped numbers of elements on circuit (aka put max number from circuit)
@@ -54,7 +55,8 @@ private:
                                      const std::vector<bool> &vec, double reliability) const;
 
     int statisticForModule(size_t count, const std::vector<size_t> &skipped,
-                           std::map<std::string, size_t> &res, int i, const std::string& name) const;
+                           std::map<std::string, size_t> &res, int i,
+                           const std::string &name) const;
     void appendStageFailureStatistic(std::vector<bool> state);
     void finishStageStatistic();
     void resetStageStatistic(size_t modelSize);

@@ -44,7 +44,8 @@ bool Redistribution::redistribute(std::vector<bool> state)
     return checkRedistribution();
 }
 
-bool Redistribution::redistributeModule(int i) {
+bool Redistribution::redistributeModule(int i)
+{
     int j = -1;
     while (mCurrentLoad[i] > 0) {
         j++;
@@ -85,4 +86,39 @@ bool Redistribution::checkRedistribution()
         }
     }
     return currentTotalLoad == mTotalLoad;
+}
+
+void Redistribution::printTable()
+{
+    std::cout << "N\t"
+              << "Tn\t"
+              << "Tm\t";
+    for (int i = 0; i < mCount; ++i) {
+        if (std::find(mSkippedModules.begin(), mSkippedModules.end(), i + 1)
+            == mSkippedModules.end()) {
+            std::cout << "Pr" << i + 1 << "\t";
+        }
+    }
+    std::cout << std::endl;
+    for (int i = 0; i < mCount; ++i) {
+        if (std::find(mSkippedModules.begin(), mSkippedModules.end(), i + 1)
+            != mSkippedModules.end()) {
+            continue;
+        }
+        std::cout << "Pr" << i + 1 << "\t" << mNominalLoads[i] << "\t" << mMaxLoads[i] << "\t";
+        for (int j = 0; j < mCount; ++j) {
+            if (j == i) {
+                std::cout << "-\t";
+                continue;
+            }
+            if (std::find(mSkippedModules.begin(), mSkippedModules.end(), j + 1)
+                != mSkippedModules.end()) {
+                continue;
+            }
+            int available = mMaxLoads[j] - mNominalLoads[j];
+
+            std::cout << std::min(available, (int)mNominalLoads[i]) << "\t";
+        }
+        std::cout << std::endl;
+    }
 }

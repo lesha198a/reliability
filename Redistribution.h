@@ -16,6 +16,8 @@ public:
 
     bool redistribute(std::vector<bool> state);
 
+    void printTable();
+
 private:
     bool redistributeModule(int i);
     bool checkRedistribution();

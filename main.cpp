@@ -22,7 +22,9 @@ int main()
 {
     std::srand(std::time(nullptr));
     Reliable calc;
-    size_t n = 10000;
+    calc.printRedistributionTable();
+    std::cout<<"\n\n";
+    size_t n = 100000;
     double sum1 = 0;
     for (int i = 0; i < n; ++i) {
         sum1 += calc.calculateReliability(0, 1, false);
