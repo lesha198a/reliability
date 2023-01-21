@@ -1,19 +1,20 @@
 //
-// Created by lesha on 14.01.2023.
+// Created by oleksii on 1/19/23.
 //
 
-#ifndef PROGRAM_RELIABLE_H
-#define PROGRAM_RELIABLE_H
+#ifndef PROGRAM_RELIABLEMODED_H
+#define PROGRAM_RELIABLEMODED_H
 
 #include <vector>
 #include <set>
 #include <map>
+#include <string>
 #include "Redistribution.h"
 
-class Reliable
+class ReliableModed
 {
 public:
-    Reliable();
+    ReliableModed();
 
     double calculateReliability(size_t failures, double percentage, bool redistribution);
 
@@ -23,16 +24,16 @@ public:
 
 private:
     //count with skipped numbers of elements on circuit (aka put max number from circuit)
-    static size_t ACount() { return 3; }
-    static size_t BCount() { return 4; }
+    static size_t ACount() { return 4; }
+    static size_t BCount() { return 5; }
     static size_t CCount() { return 6; }
     static size_t DCount() { return 8; }
-    static size_t MCount() { return 2; }
+    static size_t MCount() { return 3; }
     static size_t PrCount() { return 6; }
 
-    static std::vector<size_t> ASkipped() { return {2}; }
+    static std::vector<size_t> ASkipped() { return {}; }
     static std::vector<size_t> BSkipped() { return {}; }
-    static std::vector<size_t> CSkipped() { return {3}; }
+    static std::vector<size_t> CSkipped() { return {}; }
     static std::vector<size_t> DSkipped() { return {4}; }
     static std::vector<size_t> MSkipped() { return {}; }
     static std::vector<size_t> PrSkipped() { return {}; }
@@ -63,25 +64,23 @@ private:
 
     bool func1()
     {
-        return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2)) and A(1) and M(1);
+        return (D(1) or D(2) or D(3)) and (C(1) or C(2) or C(3)) and (B(1) or B(2))
+               and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and (A(1) or A(2));
     }
 
     bool func2()
     {
-        return D(3) and C(2) and (B(1) or B(2))
-               and (Pr(3) or (A(1) and M(1) and C(4) and (D(5) or D(6))));
+        return (A(1) or A(2)) and (M(1) or M(2))
+               and (C(4) and (D(5) or D(6)) or A(3) and (B(4) or B(5)));
     }
 
     bool func3()
     {
-        return D(1) and C(1) and (B(1) or B(2))
-               and (Pr(4) or (A(1) and M(2) and A(3) and B(4) and C(6) and D(8)));
+        return (A(4) and (B(3) or B(5) or B(5) and A(3) and B(4)) or A(3) and (B(4) or B(5)))
+               and (Pr(5) or Pr(6) or (C(5) or C(6)) and (D(7) or D(8)));
     }
 
-    bool func4()
-    {
-        return (D(7) or D(8)) and C(5) and B(3) and (Pr(5) or Pr(6)) and B(4) and A(3) and M(2);
-    }
+    bool func4() { return (A(1) or A(2)) and (M(3) or M(1)); }
 
     bool mainFunc() { return func1() and func2() and func3() and func4(); }
 
@@ -134,4 +133,4 @@ private:
     Redistribution mRedistribution;
 };
 
-#endif //PROGRAM_RELIABLE_H
+#endif //PROGRAM_RELIABLEMODED_H

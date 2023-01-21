@@ -1,15 +1,13 @@
-//
-// Created by lesha on 14.01.2023.
-//
+#include "ReliableModed.h"
 
 #include <ctime>
 #include <algorithm>
 #include <set>
 #include <iostream>
 #include <sstream>
-#include "Reliable.h"
+#include "ReliableModed.h"
 
-Reliable::Reliable()
+ReliableModed::ReliableModed()
 {
     mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
     mRedistribution.setProcessorParams(1, 45, 90);
@@ -21,7 +19,7 @@ Reliable::Reliable()
     resetStatistic();
 }
 
-bool Reliable::A(size_t i)
+bool ReliableModed::A(size_t i)
 {
     if (i > adapters.size()) {
         exit(1);
@@ -29,7 +27,7 @@ bool Reliable::A(size_t i)
     return adapters[i - 1];
 }
 
-bool Reliable::B(size_t i)
+bool ReliableModed::B(size_t i)
 {
     if (i > buses.size()) {
         exit(1);
@@ -37,7 +35,7 @@ bool Reliable::B(size_t i)
     return buses[i - 1];
 }
 
-bool Reliable::C(size_t i)
+bool ReliableModed::C(size_t i)
 {
     if (i > controllers.size()) {
         exit(1);
@@ -45,7 +43,7 @@ bool Reliable::C(size_t i)
     return controllers[i - 1];
 }
 
-bool Reliable::M(size_t i)
+bool ReliableModed::M(size_t i)
 {
     if (i > mainlines.size()) {
         exit(1);
@@ -53,7 +51,7 @@ bool Reliable::M(size_t i)
     return mainlines[i - 1];
 }
 
-bool Reliable::Pr(size_t i)
+bool ReliableModed::Pr(size_t i)
 {
     if (i > processors.size()) {
         exit(1);
@@ -61,7 +59,7 @@ bool Reliable::Pr(size_t i)
     return processors[i - 1];
 }
 
-bool Reliable::D(size_t i)
+bool ReliableModed::D(size_t i)
 {
     if (i > detectors.size()) {
         exit(1);
@@ -69,7 +67,7 @@ bool Reliable::D(size_t i)
     return detectors[i - 1];
 }
 
-double Reliable::calculateReliability(size_t failures, double percentage, bool redistribution)
+double ReliableModed::calculateReliability(size_t failures, double percentage, bool redistribution)
 {
     double result = 0;
     auto modelSize = getModelSize();
@@ -102,14 +100,15 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
     return result / percentage;
 }
 
-size_t Reliable::getModelSize() const
+size_t ReliableModed::getModelSize() const
 {
     return ACount() + BCount() + CCount() + MCount() + PrCount() + DCount()
            - (ASkipped().size() + BSkipped().size() + CSkipped().size() + DSkipped().size()
               + MSkipped().size() + PrSkipped().size());
 }
 
-size_t Reliable::factorialTriple(size_t dividend, size_t divisor, size_t divisor2, double resScale)
+size_t ReliableModed::factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
+                                      double resScale)
 {
     size_t dividendFixed = dividend;
     if (dividend < 2) {
@@ -155,8 +154,8 @@ size_t Reliable::factorialTriple(size_t dividend, size_t divisor, size_t divisor
     return static_cast<size_t>(resScale * ((res1) / (res2 * res3 * res4)));
 }
 
-std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, size_t failures,
-                                                            size_t modelSize) const
+std::vector<std::set<size_t>> ReliableModed::getFailurePositions(size_t vecCount, size_t failures,
+                                                                 size_t modelSize) const
 {
     std::vector<std::set<size_t>> res;
     for (int i = 0; i < vecCount; ++i) {
@@ -170,7 +169,8 @@ std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, siz
     return res;
 }
 
-std::vector<bool> Reliable::getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize)
+std::vector<bool> ReliableModed::getStateFrom(const std::set<size_t> &failurePoses,
+                                              size_t modelSize)
 {
     std::vector<bool> res;
     res.resize(modelSize, true);
@@ -180,7 +180,7 @@ std::vector<bool> Reliable::getStateFrom(const std::set<size_t> &failurePoses, s
     return res;
 }
 
-void Reliable::setState(const std::vector<bool> &state, size_t modelSize)
+void ReliableModed::setState(const std::vector<bool> &state, size_t modelSize)
 {
     resetStateVecs();
     int i = setModulesFromState(modelSize, 0, state, ASkipped(), adapters, ACount());
@@ -191,10 +191,10 @@ void Reliable::setState(const std::vector<bool> &state, size_t modelSize)
     setModulesFromState(modelSize, i, state, PrSkipped(), processors, PrCount());
 }
 
-int Reliable::setModulesFromState(size_t modelSize, int iState,
-                                  const std::vector<bool> &localState,
-                                  const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
-                                  size_t count) const
+int ReliableModed::setModulesFromState(size_t modelSize, int iState,
+                                       const std::vector<bool> &localState,
+                                       const std::vector<size_t> &skipped,
+                                       std::vector<bool> &vecToSet, size_t count) const
 {
     for (size_t j = 0; j < count && iState < modelSize; ++j) {
         if (std::find(skipped.begin(), skipped.end(), j + 1) != skipped.end()) {
@@ -206,7 +206,7 @@ int Reliable::setModulesFromState(size_t modelSize, int iState,
     return iState;
 }
 
-double Reliable::getProbability()
+double ReliableModed::getProbability()
 {
     double res = 1;
 
@@ -220,8 +220,9 @@ double Reliable::getProbability()
     return res;
 }
 
-double Reliable::getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
-                                           const std::vector<bool> &vec, double reliability) const
+double ReliableModed::getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
+                                                const std::vector<bool> &vec,
+                                                double reliability) const
 {
     double res = 1;
     for (int i = 0; i < count; ++i) {
@@ -234,7 +235,7 @@ double Reliable::getModuleReliabilityState(size_t count, const std::vector<size_
     return res;
 }
 
-void Reliable::appendStageFailureStatistic(std::vector<bool> state)
+void ReliableModed::appendStageFailureStatistic(std::vector<bool> state)
 {
     for (int i = 0; i < state.size(); ++i) {
         if (!state[i]) {
@@ -243,20 +244,20 @@ void Reliable::appendStageFailureStatistic(std::vector<bool> state)
     }
 }
 
-void Reliable::finishStageStatistic()
+void ReliableModed::finishStageStatistic()
 {
     for (int i = 0; i < mTotalStatistic.size(); ++i) {
         mTotalStatistic[i] += mStageStatistic[i];
     }
 }
 
-void Reliable::resetStageStatistic(size_t modelSize)
+void ReliableModed::resetStageStatistic(size_t modelSize)
 {
     mStageStatistic.clear();
     mStageStatistic.resize(modelSize, 0);
 }
 
-std::map<std::string, size_t> Reliable::getStatistics()
+std::map<std::string, size_t> ReliableModed::getStatistics()
 {
     std::map<std::string, size_t> res;
 
@@ -270,9 +271,9 @@ std::map<std::string, size_t> Reliable::getStatistics()
     return res;
 }
 
-int Reliable::statisticForModule(size_t count, const std::vector<size_t> &skipped,
-                                 std::map<std::string, size_t> &res, int i,
-                                 const std::string &name) const
+int ReliableModed::statisticForModule(size_t count, const std::vector<size_t> &skipped,
+                                      std::map<std::string, size_t> &res, int i,
+                                      const std::string &name) const
 {
     std::stringstream stream;
     for (int j = 0; j < count; ++j) {
@@ -288,7 +289,7 @@ int Reliable::statisticForModule(size_t count, const std::vector<size_t> &skippe
     return i;
 }
 
-void Reliable::resetStatistic()
+void ReliableModed::resetStatistic()
 {
     mTotalStatistic.clear();
     mTotalStatistic.resize(getModelSize(), 0);
