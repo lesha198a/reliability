@@ -1,25 +1,12 @@
-//
-// Created by lesha on 14.01.2023.
-//
 
 #include <ctime>
 #include <algorithm>
 #include <set>
 #include <iostream>
 #include <sstream>
+#include <random>
 #include "Reliable.h"
 
-Reliable::Reliable()
-{
-    mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
-    mRedistribution.setProcessorParams(1, 45, 90);
-    mRedistribution.setProcessorParams(2, 60, 90);
-    mRedistribution.setProcessorParams(3, 50, 90);
-    mRedistribution.setProcessorParams(4, 60, 90);
-    mRedistribution.setProcessorParams(5, 20, 50);
-    mRedistribution.setProcessorParams(6, 40, 50);
-    resetStatistic();
-}
 
 bool Reliable::A(size_t i)
 {
@@ -82,7 +69,9 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
         bool sysState = mainFunc();
         if (redistribution && !sysState) {
             bool redistributed = mRedistribution.redistribute(processors);
+            mRedistribStat++;
             if (redistributed) {
+                mCompleteRedistribStat++;
                 auto stateCopy = stateVec;
                 for (int i = stateCopy.size() - (PrCount() - PrSkipped().size());
                      i < stateCopy.size(); ++i) {
@@ -102,7 +91,16 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
     return result / percentage;
 }
 
-size_t Reliable::getModelSize() const
+double Reliable::getProbabilityOfSuccesfulState()
+{
+    auto modelSize = getModelSize();
+    auto stateVec = getStateFrom({}, modelSize);
+    setState(stateVec, modelSize);
+    double reliabilityOfTrueState = getProbability();
+    return reliabilityOfTrueState;
+}
+
+size_t Reliable::getModelSize()
 {
     return ACount() + BCount() + CCount() + MCount() + PrCount() + DCount()
            - (ASkipped().size() + BSkipped().size() + CSkipped().size() + DSkipped().size()
@@ -155,6 +153,8 @@ size_t Reliable::factorialTriple(size_t dividend, size_t divisor, size_t divisor
     return static_cast<size_t>(resScale * ((res1) / (res2 * res3 * res4)));
 }
 
+std::mt19937 generator(std::random_device{}());
+
 std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, size_t failures,
                                                             size_t modelSize) const
 {
@@ -162,7 +162,7 @@ std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, siz
     for (int i = 0; i < vecCount; ++i) {
         std::set<size_t> positions;
         while (positions.size() <= failures) {
-            size_t pos = std::rand() % modelSize;
+            size_t pos = generator() % modelSize;
             positions.insert(pos);
         }
         res.push_back(positions);
@@ -243,19 +243,6 @@ void Reliable::appendStageFailureStatistic(std::vector<bool> state)
     }
 }
 
-void Reliable::finishStageStatistic()
-{
-    for (int i = 0; i < mTotalStatistic.size(); ++i) {
-        mTotalStatistic[i] += mStageStatistic[i];
-    }
-}
-
-void Reliable::resetStageStatistic(size_t modelSize)
-{
-    mStageStatistic.clear();
-    mStageStatistic.resize(modelSize, 0);
-}
-
 std::map<std::string, size_t> Reliable::getStatistics()
 {
     std::map<std::string, size_t> res;
@@ -290,6 +277,29 @@ int Reliable::statisticForModule(size_t count, const std::vector<size_t> &skippe
 
 void Reliable::resetStatistic()
 {
+    mRedistribStat = 0;
+    mCompleteRedistribStat = 0;
     mTotalStatistic.clear();
     mTotalStatistic.resize(getModelSize(), 0);
 }
+
+void Reliable::amendStatistics(std::map<std::string, size_t> &mainStat,
+                               const std::map<std::string, size_t> &otherStat)
+{
+    for (const auto &item : otherStat) {
+        mainStat[item.first] = item.second;
+    }
+}
+
+template<typename T, typename>
+Reliable::Reliable()
+{
+    mCircuitModel = std::make_unique<T>();
+    mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
+    mRedistribution.setProcessorParams(1, 45, 90);
+    mRedistribution.setProcessorParams(2, 60, 90);
+    mRedistribution.setProcessorParams(3, 50, 90);
+    mRedistribution.setProcessorParams(4, 60, 90);
+    mRedistribution.setProcessorParams(5, 20, 50);
+    mRedistribution.setProcessorParams(6, 40, 50);
+    resetStatistic();}

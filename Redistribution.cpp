@@ -1,6 +1,3 @@
-//
-// Created by oleksii on 1/16/23.
-//
 
 #include "Redistribution.h"
 

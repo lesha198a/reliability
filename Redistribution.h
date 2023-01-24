@@ -1,6 +1,3 @@
-//
-// Created by oleksii on 1/16/23.
-//
 
 #ifndef PROGRAM_REDISTRIBUTION_H
 #define PROGRAM_REDISTRIBUTION_H

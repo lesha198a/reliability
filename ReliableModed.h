@@ -1,6 +1,3 @@
-//
-// Created by oleksii on 1/19/23.
-//
 
 #ifndef PROGRAM_RELIABLEMODED_H
 #define PROGRAM_RELIABLEMODED_H
@@ -23,6 +20,29 @@ public:
     void printRedistributionTable() { mRedistribution.printTable(); }
 
 private:
+
+    static size_t factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
+                                  double resScale);
+
+    std::vector<std::set<size_t>> getFailurePositions(size_t vecCount, size_t failures,
+                                                      size_t modelSize) const;
+
+    std::vector<bool> getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize);
+    void setState(const std::vector<bool> &state, size_t modelSize);
+    int setModulesFromState(size_t modelSize, int iState, const std::vector<bool> &localState,
+                            const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
+                            size_t count) const;
+    double getProbability();
+    double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
+                                     const std::vector<bool> &vec, double reliability) const;
+
+    int statisticForModule(size_t count, const std::vector<size_t> &skipped,
+                           std::map<std::string, size_t> &res, int i,
+                           const std::string &name) const;
+    void appendStageFailureStatistic(std::vector<bool> state);
+    void finishStageStatistic();
+    void resetStageStatistic(size_t modelSize);
+
     //count with skipped numbers of elements on circuit (aka put max number from circuit)
     static size_t ACount() { return 4; }
     static size_t BCount() { return 5; }
@@ -39,28 +59,6 @@ private:
     static std::vector<size_t> PrSkipped() { return {}; }
 
     size_t getModelSize() const;
-
-    static size_t factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
-                                  double resScale);
-
-    std::vector<std::set<size_t>> getFailurePositions(size_t vecCount, size_t failures,
-                                                      size_t modelSize) const;
-
-    std::vector<bool> getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize);
-    void setState(const std::vector<bool> &state, size_t modelSize);
-    double getProbability();
-    int setModulesFromState(size_t modelSize, int iState, const std::vector<bool> &localState,
-                            const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
-                            size_t count) const;
-    double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
-                                     const std::vector<bool> &vec, double reliability) const;
-
-    int statisticForModule(size_t count, const std::vector<size_t> &skipped,
-                           std::map<std::string, size_t> &res, int i,
-                           const std::string &name) const;
-    void appendStageFailureStatistic(std::vector<bool> state);
-    void finishStageStatistic();
-    void resetStageStatistic(size_t modelSize);
 
     bool func1()
     {

@@ -1,6 +1,3 @@
-//
-// Created by lesha on 14.01.2023.
-//
 
 #ifndef PROGRAM_RELIABLE_H
 #define PROGRAM_RELIABLE_H
@@ -8,36 +5,27 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <memory>
 #include "Redistribution.h"
+#include "CircuitModel.h"
 
 class Reliable
 {
 public:
+    template<typename T, typename = std::enable_if_t<std::is_base_of<CircuitModel, T>::value>>
     Reliable();
 
     double calculateReliability(size_t failures, double percentage, bool redistribution);
 
     std::map<std::string, size_t> getStatistics();
+    static void amendStatistics(std::map<std::string, size_t> &mainStat,
+                         const std::map<std::string, size_t> &otherStat);
     void resetStatistic();
     void printRedistributionTable() { mRedistribution.printTable(); }
 
+    double getProbabilityOfSuccesfulState();
+
 private:
-    //count with skipped numbers of elements on circuit (aka put max number from circuit)
-    static size_t ACount() { return 3; }
-    static size_t BCount() { return 4; }
-    static size_t CCount() { return 6; }
-    static size_t DCount() { return 8; }
-    static size_t MCount() { return 2; }
-    static size_t PrCount() { return 6; }
-
-    static std::vector<size_t> ASkipped() { return {2}; }
-    static std::vector<size_t> BSkipped() { return {}; }
-    static std::vector<size_t> CSkipped() { return {3}; }
-    static std::vector<size_t> DSkipped() { return {4}; }
-    static std::vector<size_t> MSkipped() { return {}; }
-    static std::vector<size_t> PrSkipped() { return {}; }
-
-    size_t getModelSize() const;
 
     static size_t factorialTriple(size_t dividend, size_t divisor, size_t divisor2,
                                   double resScale);
@@ -58,29 +46,45 @@ private:
                            std::map<std::string, size_t> &res, int i,
                            const std::string &name) const;
     void appendStageFailureStatistic(std::vector<bool> state);
-    void finishStageStatistic();
-    void resetStageStatistic(size_t modelSize);
+
+    //count with skipped numbers of elements on circuit (aka put max number from circuit)
+    static size_t ACount() { return 3; }
+    static size_t BCount() { return 4; }
+    static size_t CCount() { return 6; }
+    static size_t DCount() { return 8; }
+    static size_t MCount() { return 2; }
+    static size_t PrCount() { return 6; }
+
+    static std::vector<size_t> ASkipped() { return {2}; }
+    static std::vector<size_t> BSkipped() { return {}; }
+    static std::vector<size_t> CSkipped() { return {3}; }
+    static std::vector<size_t> DSkipped() { return {4}; }
+    static std::vector<size_t> MSkipped() { return {}; }
+    static std::vector<size_t> PrSkipped() { return {}; }
+
+    static size_t getModelSize();
 
     bool func1()
     {
-        return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2)) and A(1) and M(1);
+        return D(1) and C(1) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
+               and (M(1) or M(2));
     }
 
     bool func2()
     {
-        return D(3) and C(2) and (B(1) or B(2))
-               and (Pr(3) or (A(1) and M(1) and C(4) and (D(5) or D(6))));
+        return D(3) and C(2) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
+               and (M(1) or M(2));
     }
 
     bool func3()
     {
-        return D(1) and C(1) and (B(1) or B(2))
-               and (Pr(4) or (A(1) and M(2) and A(3) and B(4) and C(6) and D(8)));
+        return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
+               and (M(1) or M(2));
     }
 
     bool func4()
     {
-        return (D(7) or D(8)) and C(5) and B(3) and (Pr(5) or Pr(6)) and B(4) and A(3) and M(2);
+        return ((D(5) or D(6)) and C(4) and M(1) or ((D(7) or D(8)) and C(5) and B(3) and (Pr(5) or Pr(6)) and B(4) and A(3) or D(8) and C(6)) and M(2));
     }
 
     bool mainFunc() { return func1() and func2() and func3() and func4(); }
@@ -128,10 +132,13 @@ private:
     const double mainlinesReliability = 1.3e-4;   //M
     const double processorsReliability = 6.2e-4;  //Pr
 
-    std::vector<size_t> mStageStatistic;
+    size_t mRedistribStat = 0;
+    size_t mCompleteRedistribStat = 0;
     std::vector<size_t> mTotalStatistic;
 
     Redistribution mRedistribution;
+
+    std::unique_ptr<CircuitModel> mCircuitModel;
 };
 
 #endif //PROGRAM_RELIABLE_H
