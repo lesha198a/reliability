@@ -6,13 +6,28 @@
 #define PROGRAM_CIRCUITMODEL_H
 
 #include <vector>
+#include <map>
+#include <string>
+#include <set>
+#include "Redistribution.h"
 
 class CircuitModel
 {
 public:
     void setState(const std::vector<bool> &state, size_t modelSize);
     double getProbability();
+    std::map<std::string, size_t> getStatistics(const std::vector<size_t> &statistic);
 
+    size_t getModelSize() const;
+
+    bool mainFunc() { return func1() and func2() and func3() and func4(); }
+
+    void setPrInStateVecTrue(std::vector<bool> &state) const;
+    std::vector<bool> getProcessors() { return processors; }
+    void setRedistributionTable(Redistribution &redistribution) const;
+    std::vector<bool> generateState(const std::set<size_t> &failurePoses);
+
+protected:
     //count with skipped numbers of elements on circuit (aka put max number from circuit)
     virtual size_t ACount() const = 0;
     virtual size_t BCount() const = 0;
@@ -28,11 +43,6 @@ public:
     virtual std::vector<size_t> MSkipped() const = 0;
     virtual std::vector<size_t> PrSkipped() const = 0;
 
-    size_t getModelSize() const;
-
-    bool mainFunc() { return func1() and func2() and func3() and func4(); }
-
-protected:
     //indexation starts from 1
     bool A(size_t i);
     bool B(size_t i);
@@ -63,6 +73,9 @@ private:
                             size_t count) const;
     double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
                                      const std::vector<bool> &vec, double reliability) const;
+    int statisticForModule(size_t count, const std::vector<size_t> &skipped,
+                           std::map<std::string, size_t> &res, int i, const std::string &name,
+                           const std::vector<size_t> &statistic) const;
 
     std::vector<bool> adapters;    //A
     std::vector<bool> buses;       //B
@@ -73,6 +86,52 @@ private:
 };
 
 class OrigCircuit : public CircuitModel
+{
+public:
+    size_t ACount() const override { return 3; }
+    size_t BCount() const override { return 4; }
+    size_t CCount() const override { return 6; }
+    size_t DCount() const override { return 8; }
+    size_t MCount() const override { return 2; }
+    size_t PrCount() const override { return 6; }
+    std::vector<size_t> ASkipped() const override { return {2}; }
+    std::vector<size_t> BSkipped() const override { return {}; }
+    std::vector<size_t> CSkipped() const override { return {3}; }
+    std::vector<size_t> DSkipped() const override { return {4}; }
+    std::vector<size_t> MSkipped() const override { return {}; }
+    std::vector<size_t> PrSkipped() const override { return {}; }
+
+protected:
+    bool func1() override
+    {
+        return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4))
+               and A(1) and (M(1) or M(2));
+    }
+    bool func2() override
+    {
+        return D(3) and C(2) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4))
+               and (A(1) and M(1) and C(4) and (D(5) or D(6)));
+    }
+    bool func3() override
+    {
+        return D(1) and C(1) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4))
+               and (A(1) and M(2) and A(3) and B(4));
+    }
+    bool func4() override
+    {
+        return M(2) and A(3) and B(4)
+               and ((Pr(5) or Pr(6)) and B(3) and C(5) and (D(7) or D(8)) or C(6) and D(8));
+    }
+
+    double adaptersReliability() override { return 4.2e-4; }    //A
+    double busesReliability() override { return 1.4e-5; }       //B
+    double controllersReliability() override { return 3.1e-4; } //C
+    double detectorsReliability() override { return 2.2e-5; }   //D
+    double mainlinesReliability() override { return 1.3e-4; }   //M
+    double processorsReliability() override { return 6.2e-4; }  //Pr
+};
+
+class ModifiedCircuit : public CircuitModel
 {
 public:
     size_t ACount() const override { return 4; }

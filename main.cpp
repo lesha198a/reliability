@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <map>
 #include <ctime>
@@ -35,19 +36,18 @@ void printStatFile(const std::map<std::string, size_t> &stat, std::ofstream &str
 }
 
 template<typename T, typename = std::enable_if_t<std::is_base_of<CircuitModel, T>::value>>
-std::string calculate(size_t ages, const std::string& csvName, bool redistribution)
+std::string calculate(size_t ages, const std::string &csvName, bool redistribution)
 {
-    Reliable<OrigCircuit> reliable;
     auto start = std::chrono::steady_clock::now();
 
-    auto calc8 = std::unique<Reliable>(new Reliable<T>());
-    auto calc7 = Reliable<T>();
-    auto calc6 = Reliable<T>();
-    auto calc5 = Reliable<T>();
-    auto calc4 = Reliable<T>();
-    auto calc3 = Reliable<T>();
-    auto calc1 = Reliable<T>();
-    auto calc2 = Reliable<T>();
+    auto calc8 = Reliable(std::make_unique<T>());
+    auto calc7 = Reliable(std::make_unique<T>());
+    auto calc6 = Reliable(std::make_unique<T>());
+    auto calc5 = Reliable(std::make_unique<T>());
+    auto calc4 = Reliable(std::make_unique<T>());
+    auto calc3 = Reliable(std::make_unique<T>());
+    auto calc1 = Reliable(std::make_unique<T>());
+    auto calc2 = Reliable(std::make_unique<T>());
     calc1.printRedistributionTable();
     size_t n = (size_t)(ages / 8) * 8;
     double reliabilityOfTrueState = calc1.getProbabilityOfSuccesfulState();
@@ -117,13 +117,20 @@ std::string calculate(size_t ages, const std::string& csvName, bool redistributi
     Reliable::amendStatistics(stat, calc6.getStatistics());
     Reliable::amendStatistics(stat, calc7.getStatistics());
     Reliable::amendStatistics(stat, calc8.getStatistics());
-    double P = sum / (double)n + reliabilityOfTrueState;
+    double P = sum / (double)n + reliabilityOfTrueState; /*
+
+    std::cout.precision(dbl::max_digits10);
+    std::cout<<(double)(sum/(double)n)<<std::endl;*/
 
     auto end = std::chrono::steady_clock::now();
     auto timeSpan = static_cast<std::chrono::duration<double>>(end - start);
     std::stringstream stream;
     stream.precision(dbl::max_digits10);
     stream << "Redistribution: " << (redistribution ? "true" : "false") << std::endl;
+    if (redistribution) {
+        stream << "Redistribution table:" << std::endl
+               << calc1.printRedistributionTable() << std::endl;
+    }
     stream << "Iterations: " << n << std::endl;
     stream << "Duration: " << timeSpan.count() << "s" << std::endl;
     stream << "Q = " << 1 - P << std::endl;
@@ -140,61 +147,29 @@ int main()
 {
     std::string passive;
     std::string active;
-    size_t n = 100000;
+    std::string passiveModified;
+    std::string activeModified;
+    size_t n = 1000000;
     std::thread tPassive([&passive, n] { passive = calculate<OrigCircuit>(n, "passive", false); });
     std::thread tActive([&active, n] { active = calculate<OrigCircuit>(n, "active", true); });
+    std::thread tPassiveModified([&passiveModified, n] {
+        passiveModified = calculate<ModifiedCircuit>(n, "passiveModified", false);
+    });
+    std::thread tActiveModified([&activeModified, n] {
+        activeModified = calculate<ModifiedCircuit>(n, "activeModified", true);
+    });
+
     tPassive.join();
+    std::cout << passive << std::endl << std::endl;
+
     tActive.join();
-    std::cout << passive <<std::endl;
-    std::cout << active <<std::endl;
+    std::cout << active << std::endl << std::endl;
+
+    tPassiveModified.join();
+    std::cout << passiveModified << std::endl << std::endl;
+
+    tActiveModified.join();
+    std::cout << activeModified << std::endl << std::endl;
 
     return 0;
 }
-
-/*
-int main()
-{
-    std::srand(std::time(nullptr));
-    ReliableModed calc;
-    calc.printRedistributionTable();
-    std::cout<<"\n\n";
-    size_t n = 1000;
-    double sum1 = 0;
-    for (int i = 0; i < n; ++i) {
-        sum1 += calc.calculateReliability(0, 1, false);
-        sum1 += calc.calculateReliability(1, 1, false);
-        sum1 += calc.calculateReliability(2, 0.5, false);
-        sum1 += calc.calculateReliability(3, 0.1, false);
-    }
-    double Q1 = sum1 / n;
-    std::cout << "Without active redistribution:" << std::endl;
-    std::cout << "Q = " << Q1 << std::endl;
-    std::cout << "P = " << 1 - Q1 << std::endl;
-    auto stat1 = calc.getStatistics();
-    printStat(stat1);
-
-    std::ofstream passiveCsv("passiveMode.csv");
-    printStatFile(stat1, passiveCsv);
-    passiveCsv.close();
-
-    calc.resetStatistic();
-    double sum2 = 0;
-    for (int i = 0; i < n; ++i) {
-        sum2 += calc.calculateReliability(0, 1, true);
-        sum2 += calc.calculateReliability(1, 1, true);
-        sum2 += calc.calculateReliability(2, 0.5, true);
-        sum2 += calc.calculateReliability(3, 0.1, true);
-    }
-    double Q2 = sum2 / n;
-    std::cout << "\n\nWith active redistribution:" << std::endl;
-    std::cout << "Q = " << Q2 << std::endl;
-    std::cout << "P = " << 1 - Q2 << std::endl;
-    auto stat2 = calc.getStatistics();
-    printStat(stat2);
-
-    std::ofstream activeCsv("activeMode.csv");
-    printStatFile(stat2, activeCsv);
-    activeCsv.close();
-    return 0;
-}
-*/

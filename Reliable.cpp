@@ -7,83 +7,31 @@
 #include <random>
 #include "Reliable.h"
 
-
-bool Reliable::A(size_t i)
-{
-    if (i > adapters.size()) {
-        exit(1);
-    }
-    return adapters[i - 1];
-}
-
-bool Reliable::B(size_t i)
-{
-    if (i > buses.size()) {
-        exit(1);
-    }
-    return buses[i - 1];
-}
-
-bool Reliable::C(size_t i)
-{
-    if (i > controllers.size()) {
-        exit(1);
-    }
-    return controllers[i - 1];
-}
-
-bool Reliable::M(size_t i)
-{
-    if (i > mainlines.size()) {
-        exit(1);
-    }
-    return mainlines[i - 1];
-}
-
-bool Reliable::Pr(size_t i)
-{
-    if (i > processors.size()) {
-        exit(1);
-    }
-    return processors[i - 1];
-}
-
-bool Reliable::D(size_t i)
-{
-    if (i > detectors.size()) {
-        exit(1);
-    }
-    return detectors[i - 1];
-}
-
 double Reliable::calculateReliability(size_t failures, double percentage, bool redistribution)
 {
     double result = 0;
-    auto modelSize = getModelSize();
+    auto modelSize = mCircuitModel->getModelSize();
     size_t vecCount = factorialTriple(modelSize, failures, modelSize - failures, percentage);
     auto failurePosVecs = getFailurePositions((size_t)vecCount, failures, modelSize);
 
     for (const auto &failurePoses : failurePosVecs) {
-        auto stateVec = getStateFrom(failurePoses, modelSize);
-        setState(stateVec, modelSize);
-        bool sysState = mainFunc();
+        auto stateVec = mCircuitModel->generateState(failurePoses);
+        mCircuitModel->setState(stateVec, modelSize);
+        bool sysState = mCircuitModel->mainFunc();
         if (redistribution && !sysState) {
-            bool redistributed = mRedistribution.redistribute(processors);
+            bool redistributed = mRedistribution.redistribute(mCircuitModel->getProcessors());
             mRedistribStat++;
             if (redistributed) {
                 mCompleteRedistribStat++;
                 auto stateCopy = stateVec;
-                for (int i = stateCopy.size() - (PrCount() - PrSkipped().size());
-                     i < stateCopy.size(); ++i) {
-                    stateCopy[i] = true;
-                }
-                setState(stateCopy, modelSize);
-                sysState = mainFunc();
+                mCircuitModel->setPrInStateVecTrue(stateCopy);
+                mCircuitModel->setState(stateCopy, modelSize);
+                sysState = mCircuitModel->mainFunc();
             }
         }
         if (sysState) {
-            setState(stateVec, modelSize);
-            result += getProbability();
+            mCircuitModel->setState(stateVec, modelSize);
+            result += mCircuitModel->getProbability();
         } else {
             appendStageFailureStatistic(stateVec);
         }
@@ -93,18 +41,11 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
 
 double Reliable::getProbabilityOfSuccesfulState()
 {
-    auto modelSize = getModelSize();
-    auto stateVec = getStateFrom({}, modelSize);
-    setState(stateVec, modelSize);
-    double reliabilityOfTrueState = getProbability();
+    auto modelSize = mCircuitModel->getModelSize();
+    auto stateVec = mCircuitModel->generateState({});
+    mCircuitModel->setState(stateVec, modelSize);
+    double reliabilityOfTrueState = mCircuitModel->getProbability();
     return reliabilityOfTrueState;
-}
-
-size_t Reliable::getModelSize()
-{
-    return ACount() + BCount() + CCount() + MCount() + PrCount() + DCount()
-           - (ASkipped().size() + BSkipped().size() + CSkipped().size() + DSkipped().size()
-              + MSkipped().size() + PrSkipped().size());
 }
 
 size_t Reliable::factorialTriple(size_t dividend, size_t divisor, size_t divisor2, double resScale)
@@ -170,70 +111,6 @@ std::vector<std::set<size_t>> Reliable::getFailurePositions(size_t vecCount, siz
     return res;
 }
 
-std::vector<bool> Reliable::getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize)
-{
-    std::vector<bool> res;
-    res.resize(modelSize, true);
-    for (const auto &failurePos : failurePoses) {
-        res[failurePos] = false;
-    }
-    return res;
-}
-
-void Reliable::setState(const std::vector<bool> &state, size_t modelSize)
-{
-    resetStateVecs();
-    int i = setModulesFromState(modelSize, 0, state, ASkipped(), adapters, ACount());
-    i = setModulesFromState(modelSize, i, state, BSkipped(), buses, BCount());
-    i = setModulesFromState(modelSize, i, state, CSkipped(), controllers, CCount());
-    i = setModulesFromState(modelSize, i, state, DSkipped(), detectors, DCount());
-    i = setModulesFromState(modelSize, i, state, MSkipped(), mainlines, MCount());
-    setModulesFromState(modelSize, i, state, PrSkipped(), processors, PrCount());
-}
-
-int Reliable::setModulesFromState(size_t modelSize, int iState,
-                                  const std::vector<bool> &localState,
-                                  const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
-                                  size_t count) const
-{
-    for (size_t j = 0; j < count && iState < modelSize; ++j) {
-        if (std::find(skipped.begin(), skipped.end(), j + 1) != skipped.end()) {
-            continue;
-        }
-        vecToSet[j] = localState[iState];
-        iState++;
-    }
-    return iState;
-}
-
-double Reliable::getProbability()
-{
-    double res = 1;
-
-    res *= getModuleReliabilityState(ACount(), ASkipped(), adapters, adaptersReliability);
-    res *= getModuleReliabilityState(BCount(), BSkipped(), buses, busesReliability);
-    res *= getModuleReliabilityState(CCount(), CSkipped(), controllers, controllersReliability);
-    res *= getModuleReliabilityState(DCount(), DSkipped(), detectors, detectorsReliability);
-    res *= getModuleReliabilityState(MCount(), MSkipped(), mainlines, mainlinesReliability);
-    res *= getModuleReliabilityState(PrCount(), PrSkipped(), processors, processorsReliability);
-
-    return res;
-}
-
-double Reliable::getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
-                                           const std::vector<bool> &vec, double reliability) const
-{
-    double res = 1;
-    for (int i = 0; i < count; ++i) {
-        if (std::find(skipped.begin(), skipped.end(), i + 1) != skipped.end()) {
-            continue;
-        }
-        double applicant = vec[i] ? 1 : 0;
-        res *= applicant * (1 - reliability) + (1 - applicant) * reliability;
-    }
-    return res;
-}
-
 void Reliable::appendStageFailureStatistic(std::vector<bool> state)
 {
     for (int i = 0; i < state.size(); ++i) {
@@ -245,34 +122,7 @@ void Reliable::appendStageFailureStatistic(std::vector<bool> state)
 
 std::map<std::string, size_t> Reliable::getStatistics()
 {
-    std::map<std::string, size_t> res;
-
-    int i = statisticForModule(ACount(), ASkipped(), res, 0, "A");
-    i = statisticForModule(BCount(), BSkipped(), res, i, "B");
-    i = statisticForModule(CCount(), CSkipped(), res, i, "C");
-    i = statisticForModule(DCount(), DSkipped(), res, i, "D");
-    i = statisticForModule(MCount(), MSkipped(), res, i, "M");
-    statisticForModule(PrCount(), PrSkipped(), res, i, "Pr");
-
-    return res;
-}
-
-int Reliable::statisticForModule(size_t count, const std::vector<size_t> &skipped,
-                                 std::map<std::string, size_t> &res, int i,
-                                 const std::string &name) const
-{
-    std::stringstream stream;
-    for (int j = 0; j < count; ++j) {
-        if (std::find(skipped.begin(), skipped.end(), j + 1) != skipped.end()) {
-            continue;
-        }
-        stream << name << j + 1;
-        auto resName = stream.str();
-        stream.str("");
-        res[resName] = mTotalStatistic[i];
-        i++;
-    }
-    return i;
+    return mCircuitModel->getStatistics(mTotalStatistic);
 }
 
 void Reliable::resetStatistic()
@@ -280,7 +130,7 @@ void Reliable::resetStatistic()
     mRedistribStat = 0;
     mCompleteRedistribStat = 0;
     mTotalStatistic.clear();
-    mTotalStatistic.resize(getModelSize(), 0);
+    mTotalStatistic.resize(mCircuitModel->getModelSize(), 0);
 }
 
 void Reliable::amendStatistics(std::map<std::string, size_t> &mainStat,
@@ -291,15 +141,8 @@ void Reliable::amendStatistics(std::map<std::string, size_t> &mainStat,
     }
 }
 
-template<typename T, typename>
-Reliable::Reliable()
+Reliable::Reliable(std::unique_ptr<CircuitModel> model) : mCircuitModel(std::move(model))
 {
-    mCircuitModel = std::make_unique<T>();
-    mRedistribution.setProcessorsCount(PrCount(), PrSkipped());
-    mRedistribution.setProcessorParams(1, 45, 90);
-    mRedistribution.setProcessorParams(2, 60, 90);
-    mRedistribution.setProcessorParams(3, 50, 90);
-    mRedistribution.setProcessorParams(4, 60, 90);
-    mRedistribution.setProcessorParams(5, 20, 50);
-    mRedistribution.setProcessorParams(6, 40, 50);
-    resetStatistic();}
+    mCircuitModel->setRedistributionTable(mRedistribution);
+    resetStatistic();
+}

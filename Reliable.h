@@ -12,8 +12,7 @@
 class Reliable
 {
 public:
-    template<typename T, typename = std::enable_if_t<std::is_base_of<CircuitModel, T>::value>>
-    Reliable();
+    Reliable(std::unique_ptr<CircuitModel> model);
 
     double calculateReliability(size_t failures, double percentage, bool redistribution);
 
@@ -21,7 +20,7 @@ public:
     static void amendStatistics(std::map<std::string, size_t> &mainStat,
                          const std::map<std::string, size_t> &otherStat);
     void resetStatistic();
-    void printRedistributionTable() { mRedistribution.printTable(); }
+    std::string printRedistributionTable() { return mRedistribution.printTable(); }
 
     double getProbabilityOfSuccesfulState();
 
@@ -33,104 +32,7 @@ private:
     std::vector<std::set<size_t>> getFailurePositions(size_t vecCount, size_t failures,
                                                       size_t modelSize) const;
 
-    std::vector<bool> getStateFrom(const std::set<size_t> &failurePoses, size_t modelSize);
-    void setState(const std::vector<bool> &state, size_t modelSize);
-    double getProbability();
-    int setModulesFromState(size_t modelSize, int iState, const std::vector<bool> &localState,
-                            const std::vector<size_t> &skipped, std::vector<bool> &vecToSet,
-                            size_t count) const;
-    double getModuleReliabilityState(size_t count, const std::vector<size_t> &skipped,
-                                     const std::vector<bool> &vec, double reliability) const;
-
-    int statisticForModule(size_t count, const std::vector<size_t> &skipped,
-                           std::map<std::string, size_t> &res, int i,
-                           const std::string &name) const;
     void appendStageFailureStatistic(std::vector<bool> state);
-
-    //count with skipped numbers of elements on circuit (aka put max number from circuit)
-    static size_t ACount() { return 3; }
-    static size_t BCount() { return 4; }
-    static size_t CCount() { return 6; }
-    static size_t DCount() { return 8; }
-    static size_t MCount() { return 2; }
-    static size_t PrCount() { return 6; }
-
-    static std::vector<size_t> ASkipped() { return {2}; }
-    static std::vector<size_t> BSkipped() { return {}; }
-    static std::vector<size_t> CSkipped() { return {3}; }
-    static std::vector<size_t> DSkipped() { return {4}; }
-    static std::vector<size_t> MSkipped() { return {}; }
-    static std::vector<size_t> PrSkipped() { return {}; }
-
-    static size_t getModelSize();
-
-    bool func1()
-    {
-        return D(1) and C(1) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
-               and (M(1) or M(2));
-    }
-
-    bool func2()
-    {
-        return D(3) and C(2) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
-               and (M(1) or M(2));
-    }
-
-    bool func3()
-    {
-        return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
-               and (M(1) or M(2));
-    }
-
-    bool func4()
-    {
-        return ((D(5) or D(6)) and C(4) and M(1) or ((D(7) or D(8)) and C(5) and B(3) and (Pr(5) or Pr(6)) and B(4) and A(3) or D(8) and C(6)) and M(2));
-    }
-
-    bool mainFunc() { return func1() and func2() and func3() and func4(); }
-
-    void resetStateVecs()
-    {
-        adapters.clear();
-        adapters.resize(ACount(), true);
-
-        buses.clear();
-        buses.resize(BCount(), true);
-
-        controllers.clear();
-        controllers.resize(CCount(), true);
-
-        detectors.clear();
-        detectors.resize(DCount(), true);
-
-        mainlines.clear();
-        mainlines.resize(MCount(), true);
-
-        processors.clear();
-        processors.resize(PrCount(), true);
-    }
-
-    //indexation starts from 1
-    bool A(size_t i);
-    bool B(size_t i);
-    bool C(size_t i);
-    bool D(size_t i);
-    bool M(size_t i);
-    bool Pr(size_t i);
-
-    std::vector<bool> adapters;    //A
-    std::vector<bool> buses;       //B
-    std::vector<bool> controllers; //C
-    std::vector<bool> detectors;   //D
-    std::vector<bool> mainlines;   //M
-    std::vector<bool> processors;  //Pr
-
-    const double adaptersReliability = 4.2e-4;    //A
-    const double busesReliability = 1.4e-5;       //B
-    const double controllersReliability = 3.1e-4; //C
-    const double detectorsReliability = 2.2e-5;   //D
-    const double mainlinesReliability = 1.3e-4;   //M
-    const double processorsReliability = 6.2e-4;  //Pr
 
     size_t mRedistribStat = 0;
     size_t mCompleteRedistribStat = 0;

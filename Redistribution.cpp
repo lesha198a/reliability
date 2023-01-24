@@ -3,6 +3,7 @@
 
 #include <utility>
 #include <iostream>
+#include <sstream>
 
 void Redistribution::setProcessorParams(size_t procNum, size_t nominalLoad, size_t maxLoad)
 {
@@ -85,27 +86,28 @@ bool Redistribution::checkRedistribution()
     return currentTotalLoad == mTotalLoad;
 }
 
-void Redistribution::printTable()
+std::string Redistribution::printTable()
 {
-    std::cout << "N\t"
+    std::stringstream stream;
+    stream << "N\t"
               << "Tn\t"
               << "Tm\t";
     for (int i = 0; i < mCount; ++i) {
         if (std::find(mSkippedModules.begin(), mSkippedModules.end(), i + 1)
             == mSkippedModules.end()) {
-            std::cout << "Pr" << i + 1 << "\t";
+            stream << "Pr" << i + 1 << "\t";
         }
     }
-    std::cout << std::endl;
+    stream << std::endl;
     for (int i = 0; i < mCount; ++i) {
         if (std::find(mSkippedModules.begin(), mSkippedModules.end(), i + 1)
             != mSkippedModules.end()) {
             continue;
         }
-        std::cout << "Pr" << i + 1 << "\t" << mNominalLoads[i] << "\t" << mMaxLoads[i] << "\t";
+        stream << "Pr" << i + 1 << "\t" << mNominalLoads[i] << "\t" << mMaxLoads[i] << "\t";
         for (int j = 0; j < mCount; ++j) {
             if (j == i) {
-                std::cout << "-\t";
+                stream << "-\t";
                 continue;
             }
             if (std::find(mSkippedModules.begin(), mSkippedModules.end(), j + 1)
@@ -114,8 +116,9 @@ void Redistribution::printTable()
             }
             int available = mMaxLoads[j] - mNominalLoads[j];
 
-            std::cout << std::min(available, (int)mNominalLoads[i]) << "\t";
+            stream << std::min(available, (int)mNominalLoads[i]) << "\t";
         }
-        std::cout << std::endl;
+        stream << std::endl;
     }
+    return stream.str();
 }

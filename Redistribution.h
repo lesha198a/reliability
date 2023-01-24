@@ -3,6 +3,7 @@
 #define PROGRAM_REDISTRIBUTION_H
 
 #include <vector>
+#include <string>
 
 class Redistribution
 {
@@ -13,7 +14,7 @@ public:
 
     bool redistribute(std::vector<bool> state);
 
-    void printTable();
+    std::string printTable();
 
 private:
     bool redistributeModule(int i);

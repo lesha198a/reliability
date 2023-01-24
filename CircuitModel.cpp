@@ -2,6 +2,7 @@
 // Created by oleksii on 1/19/23.
 //
 
+#include <sstream>
 #include "CircuitModel.h"
 
 void CircuitModel::setState(const std::vector<bool> &state, size_t modelSize)
@@ -131,6 +132,66 @@ double CircuitModel::getModuleReliabilityState(size_t count, const std::vector<s
         }
         double applicant = vec[i] ? 1 : 0;
         res *= applicant * (1 - reliability) + (1 - applicant) * reliability;
+    }
+    return res;
+}
+
+std::map<std::string, size_t> CircuitModel::getStatistics(const std::vector<size_t> &statistic)
+{
+    std::map<std::string, size_t> res;
+
+    int i = statisticForModule(ACount(), ASkipped(), res, 0, "A", statistic);
+    i = statisticForModule(BCount(), BSkipped(), res, i, "B", statistic);
+    i = statisticForModule(CCount(), CSkipped(), res, i, "C", statistic);
+    i = statisticForModule(DCount(), DSkipped(), res, i, "D", statistic);
+    i = statisticForModule(MCount(), MSkipped(), res, i, "M", statistic);
+    statisticForModule(PrCount(), PrSkipped(), res, i, "Pr", statistic);
+
+    return res;
+}
+
+int CircuitModel::statisticForModule(size_t count, const std::vector<size_t> &skipped,
+                                     std::map<std::string, size_t> &res, int i,
+                                     const std::string &name,
+                                     const std::vector<size_t> &statistic) const
+{
+    std::stringstream stream;
+    for (int j = 0; j < count; ++j) {
+        if (std::find(skipped.begin(), skipped.end(), j + 1) != skipped.end()) {
+            continue;
+        }
+        stream << name << j + 1;
+        auto resName = stream.str();
+        stream.str("");
+        res[resName] = statistic[i];
+        i++;
+    }
+    return i;
+}
+
+void CircuitModel::setPrInStateVecTrue(std::vector<bool> &state) const
+{
+    for (int i = state.size() - (PrCount() - PrSkipped().size()); i < state.size(); ++i) {
+        state[i] = true;
+    }
+}
+
+void CircuitModel::setRedistributionTable(Redistribution &redistribution) const {
+    redistribution.setProcessorsCount(PrCount(), PrSkipped());
+    redistribution.setProcessorParams(1, 45, 90);
+    redistribution.setProcessorParams(2, 60, 90);
+    redistribution.setProcessorParams(3, 50, 90);
+    redistribution.setProcessorParams(4, 60, 90);
+    redistribution.setProcessorParams(5, 20, 50);
+    redistribution.setProcessorParams(6, 40, 50);
+}
+
+std::vector<bool> CircuitModel::generateState(const std::set<size_t> &failurePoses)
+{
+    std::vector<bool> res;
+    res.resize(getModelSize(), true);
+    for (const auto &failurePos : failurePoses) {
+        res[failurePos] = false;
     }
     return res;
 }
