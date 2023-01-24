@@ -27,10 +27,15 @@ double Reliable::calculateReliability(size_t failures, double percentage, bool r
                 mCircuitModel->setPrInStateVecTrue(stateCopy);
                 mCircuitModel->setState(stateCopy, modelSize);
                 sysState = mCircuitModel->mainFunc();
+                if (sysState) {
+                    mCircuitModel->setState(stateVec, modelSize);
+                } else {
+                    appendStageFailureStatistic(stateCopy);
+                    continue;
+                }
             }
         }
         if (sysState) {
-            mCircuitModel->setState(stateVec, modelSize);
             result += mCircuitModel->getProbability();
         } else {
             appendStageFailureStatistic(stateVec);

@@ -104,18 +104,14 @@ public:
 protected:
     bool func1() override
     {
-        return D(2) and (C(1) or C(2)) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4))
-               and A(1) and (M(1) or M(2));
+        return (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
+               and (M(1) and C(4) and (D(5) or D(6)) or M(2));
     }
-    bool func2() override
-    {
-        return D(3) and C(2) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4))
-               and (A(1) and M(1) and C(4) and (D(5) or D(6)));
-    }
+    bool func2() override { return func1(); }
     bool func3() override
     {
-        return D(1) and C(1) and (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4))
-               and (A(1) and M(2) and A(3) and B(4));
+        return ((D(3) or D(2)) and C(2) or (D(1) or D(2)) and C(1)) and (B(1) or B(2))
+               and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and (A(1) and M(2) and A(3) and B(4));
     }
     bool func4() override
     {
@@ -134,15 +130,15 @@ protected:
 class ModifiedCircuit : public CircuitModel
 {
 public:
-    size_t ACount() const override { return 4; }
-    size_t BCount() const override { return 5; }
+    size_t ACount() const override { return 3; }
+    size_t BCount() const override { return 4; }
     size_t CCount() const override { return 6; }
     size_t DCount() const override { return 8; }
-    size_t MCount() const override { return 3; }
+    size_t MCount() const override { return 2; }
     size_t PrCount() const override { return 6; }
-    std::vector<size_t> ASkipped() const override { return {}; }
+    std::vector<size_t> ASkipped() const override { return {2}; }
     std::vector<size_t> BSkipped() const override { return {}; }
-    std::vector<size_t> CSkipped() const override { return {}; }
+    std::vector<size_t> CSkipped() const override { return {3}; }
     std::vector<size_t> DSkipped() const override { return {4}; }
     std::vector<size_t> MSkipped() const override { return {}; }
     std::vector<size_t> PrSkipped() const override { return {}; }
@@ -150,21 +146,17 @@ public:
 protected:
     bool func1() override
     {
-        return (D(1) or D(2) or D(3)) and (C(1) or C(2) or C(3)) and (B(1) or B(2))
-               and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and (A(1) or A(2));
+        return (B(1) or B(2)) and (Pr(1) or Pr(2) or Pr(3) or Pr(4)) and A(1)
+               and (M(1) and C(4) and (D(5) or D(6)) or M(1) or M(2));
     }
-    bool func2() override
+    bool func2() override { return func1(); }
+    bool func3() override { return func1(); }
+    bool func4() override
     {
-        return (A(1) or A(2)) and (M(1) or M(2))
-               and (C(4) and (D(5) or D(6)) or A(3) and (B(4) or B(5)));
+        return A(3)
+               and ((B(3) and C(5) or B(4) and C(6)) and (D(7) or D(8))
+                    or (B(4) or B(3)) and (Pr(5) or Pr(6)));
     }
-    bool func3() override
-    {
-        return (A(4) and (B(3) or B(5) or B(5) and A(3) and B(4)) or A(3) and (B(4) or B(5)))
-               and (Pr(5) or Pr(6) or (C(5) or C(6)) and (D(7) or D(8)));
-    }
-    bool func4() override { return (A(1) or A(2)) and (M(3) or M(1)); }
-
     double adaptersReliability() override { return 4.2e-4; }    //A
     double busesReliability() override { return 1.4e-5; }       //B
     double controllersReliability() override { return 3.1e-4; } //C

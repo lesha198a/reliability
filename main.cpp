@@ -35,7 +35,7 @@ void printStatFile(const std::map<std::string, size_t> &stat, std::ofstream &str
 }
 
 template<typename T, typename = std::enable_if_t<std::is_base_of<CircuitModel, T>::value>>
-std::string calculate(size_t ages, const std::string &csvName, bool redistribution)
+std::string calculate(size_t ages, const std::string &csvName, const bool redistribution)
 {
     auto start = std::chrono::steady_clock::now();
 
@@ -148,7 +148,7 @@ int main()
     std::string active;
     std::string passiveModified;
     std::string activeModified;
-    size_t n = 1000000;
+    size_t n = 8000000;
     std::thread tPassive([&passive, n] { passive = calculate<OrigCircuit>(n, "passive", false); });
     std::thread tActive([&active, n] { active = calculate<OrigCircuit>(n, "active", true); });
     std::thread tPassiveModified([&passiveModified, n] {
