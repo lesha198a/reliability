@@ -5,7 +5,6 @@
 #include <fstream>
 #include <thread>
 #include "Reliable.h"
-#include "ReliableModed.h"
 
 #include <limits>
 #include <sstream>
