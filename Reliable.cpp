@@ -10,16 +10,16 @@
 double Reliable::calculateReliability(size_t failures, double percentage, bool redistribution)
 {
     double result = 0;
-    auto modelSize = mCircuitModel->getModelSize();
-    size_t vecCount = factorialTriple(modelSize, failures, modelSize - failures, percentage);
-    auto failurePosVecs = getFailurePositions((size_t)vecCount, failures, modelSize);
+    const auto modelSize = mCircuitModel->getModelSize();
+    const size_t vecCount = factorialTriple(modelSize, failures, modelSize - failures, percentage);
+    const auto failurePosVecs = getFailurePositions(vecCount, failures, modelSize);
 
     for (const auto &failurePoses : failurePosVecs) {
         auto stateVec = mCircuitModel->generateState(failurePoses);
         mCircuitModel->setState(stateVec, modelSize);
         bool sysState = mCircuitModel->mainFunc();
         if (redistribution && !sysState) {
-            bool redistributed = mRedistribution.redistribute(mCircuitModel->getProcessors());
+            const bool redistributed = mRedistribution.redistribute(mCircuitModel->getProcessors());
             mRedistribStat++;
             if (redistributed) {
                 mCompleteRedistribStat++;

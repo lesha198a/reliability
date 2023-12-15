@@ -186,7 +186,7 @@ void CircuitModel::setRedistributionTable(Redistribution &redistribution) const 
     redistribution.setProcessorParams(6, 40, 50);
 }
 
-std::vector<bool> CircuitModel::generateState(const std::set<size_t> &failurePoses)
+std::vector<bool> CircuitModel::generateState(const std::set<size_t> &failurePoses) const
 {
     std::vector<bool> res;
     res.resize(getModelSize(), true);
